@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.maksimshengeliia.MyDAO;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Custom {@link DAO} factory.
@@ -41,7 +40,7 @@ public final class DAOFactory {
      * @return a storage instance
      */
     @NotNull
-    static DAO create(@NotNull final File data) throws IOException {
+    static DAO create(@NotNull final File data) {
         if (Runtime.getRuntime().maxMemory() > MAX_HEAP) {
             throw new IllegalStateException("The heap is too big. Consider setting Xmx.");
         }
