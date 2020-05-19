@@ -14,11 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class LsmDAO implements DAO {
@@ -33,7 +29,7 @@ public class LsmDAO implements DAO {
 
     // Data
     private Table memTable;
-    private final NavigableMap<Integer, Table> ssTables;
+    private NavigableMap<Integer, Table> ssTables;
 
     // State
     private int generation;
@@ -117,5 +113,20 @@ public class LsmDAO implements DAO {
         for (final Table t : ssTables.values()) {
             t.close();
         }
+    }
+
+    @Override
+    public void compact() throws IOException {
+        final File tempFile = new File(storage, generation + TEMP);
+        SSTable.serialize(tempFile, memTable.iterator(ByteBuffer.allocate(0)), memTable.size());
+        for (int i = 0; i < generation; i++) {
+            Files.delete(new File(storage, i + SUFFIX).toPath());
+        }
+        generation = 0;
+        final File file = new File(storage, generation + SUFFIX);
+        Files.move(tempFile.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE);
+        ssTables = new TreeMap<>();
+        ssTables.put(generation++, new SSTable(file));
+        memTable = new MemTable();
     }
 }
